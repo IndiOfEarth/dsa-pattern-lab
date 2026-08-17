@@ -1,0 +1,54 @@
+.code-editor {
+  min-height: 250px;
+  background: #12151c;
+}
+
+.code-editor .cm-editor {
+  min-height: 250px;
+  background: #12151c;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+.code-editor .cm-scroller {
+  overflow: auto;
+  font-family: inherit;
+}
+
+.code-editor .cm-content {
+  padding: 14px 0;
+  caret-color: #ffffff;
+}
+
+.code-editor .cm-line {
+  padding: 0 14px;
+}
+
+.code-editor .cm-gutters {
+  background: #12151c;
+  border-right: 1px solid #222733;
+  color: #596274;
+}
+
+.code-editor .cm-activeLine,
+.code-editor .cm-activeLineGutter {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.code-editor .cm-selectionBackground,
+.code-editor .cm-content ::selection {
+  background: rgba(99, 102, 241, 0.32) !important;
+}
+
+.code-editor .cm-focused {
+  outline: none;
+}
+
+.code-editor .cm-tooltip-autocomplete {
+  border: 1px solid #343a49;
+  background: #181c25;
+  color: #d8dee9;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 11px;
+}

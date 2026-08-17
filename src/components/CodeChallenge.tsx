@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import * as ts from 'typescript'
 import type { CodeChallengeData, TestCase } from '../types'
+import { CodeEditor } from './CodeEditor'
 
 type TestResult = {
   label: string
@@ -91,7 +92,6 @@ export function CodeChallenge({ challenge }: { challenge: CodeChallengeData }) {
     localStorage.setItem(storageKey, code)
   }, [code, storageKey])
 
-  const lineNumbers = useMemo(() => Array.from({ length: Math.max(1, code.split('\n').length) }, (_, i) => i + 1), [code])
   const passedCount = results?.filter((r) => r.passed).length ?? 0
 
   const runTests = async () => {
@@ -139,17 +139,15 @@ export function CodeChallenge({ challenge }: { challenge: CodeChallengeData }) {
             <button className="icon-text-button" onClick={() => setSolutionVisible((v) => !v)}>{solutionVisible ? 'Hide solution' : 'Show solution'}</button>
           </div>
         </div>
-        <div className="editor-body">
-          <div className="line-numbers" aria-hidden="true">{lineNumbers.map((n) => <span key={n}>{n}</span>)}</div>
-          <textarea
-            aria-label={`TypeScript editor for ${challenge.title}`}
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            spellCheck={false}
-          />
-        </div>
+
+        <CodeEditor
+          ariaLabel={`TypeScript editor for ${challenge.title}`}
+          value={code}
+          onChange={setCode}
+        />
+
         <div className="editor-footer">
-          <span>TypeScript · isolated local runner · 1.5s limit</span>
+          <span>TypeScript · smart indent + bracket completion · isolated local runner · 1.5s limit</span>
           <button className="run-button" onClick={runTests} disabled={running}>{running ? 'Running…' : '▶ Run tests'}</button>
         </div>
       </div>

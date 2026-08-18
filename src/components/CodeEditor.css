@@ -52,3 +52,26 @@
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   font-size: 11px;
 }
+
+.language-select {
+  appearance: none;
+  min-width: 108px;
+  border: 1px solid #343a49;
+  border-radius: 7px;
+  background: #181c25;
+  color: #d8dee9;
+  padding: 6px 28px 6px 9px;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 10px;
+  font-weight: 650;
+  cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, #7f899b 50%), linear-gradient(135deg, #7f899b 50%, transparent 50%);
+  background-position: calc(100% - 12px) 10px, calc(100% - 8px) 10px;
+  background-size: 4px 4px, 4px 4px;
+  background-repeat: no-repeat;
+}
+
+.language-select:focus {
+  outline: 2px solid rgba(99, 102, 241, 0.45);
+  outline-offset: 1px;
+}

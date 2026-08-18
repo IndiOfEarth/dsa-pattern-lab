@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import { CurriculumHome } from './components/CurriculumHome'
 import { ArraysModule } from './modules/arrays/ArraysModule'
+import { StringsModule } from './modules/strings/StringsModule'
+import { HashMapsSetsModule } from './modules/hash-maps-sets/HashMapsSetsModule'
+import { TwoPointersModule } from './modules/two-pointers/TwoPointersModule'
 
 function currentRoute() {
   const hash = window.location.hash || '#/'
@@ -22,6 +25,9 @@ export default function App() {
 
   if (route.kind === 'module') {
     if (route.moduleId === 'arrays') return <ArraysModule />
+    if (route.moduleId === 'strings') return <StringsModule />
+    if (route.moduleId === 'hash-maps-sets') return <HashMapsSetsModule />
+    if (route.moduleId === 'two-pointers') return <TwoPointersModule />
   }
 
   return <CurriculumHome />

@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import * as ts from 'typescript'
 import type { CodeChallengeData, TestCase } from '../types'
-import { CodeEditor } from './CodeEditor'
+import { pythonChallenges } from '../lib/pythonChallenges'
+import { runPythonTests } from '../lib/pythonRunner'
+import { CodeEditor, type EditorLanguage } from './CodeEditor'
 
 type TestResult = {
   label: string
@@ -11,7 +13,9 @@ type TestResult = {
   error?: string
 }
 
-function runInWorker(code: string, functionName: string, tests: TestCase[]): Promise<TestResult[]> {
+const LANGUAGE_KEY = 'dsa-pattern-lab:preferred-language'
+
+function runTypeScriptTests(code: string, functionName: string, tests: TestCase[]): Promise<TestResult[]> {
   const compiled = ts.transpileModule(code, {
     compilerOptions: {
       target: ts.ScriptTarget.ES2020,
@@ -80,31 +84,85 @@ self.onmessage = (event) => {
   })
 }
 
+function storageKey(challengeId: string, language: EditorLanguage) {
+  return `pattern-lab-code-${challengeId}:${language}`
+}
+
+function initialLanguage(challengeId: string): EditorLanguage {
+  const preferred = localStorage.getItem(LANGUAGE_KEY)
+  return preferred === 'python' && pythonChallenges[challengeId] ? 'python' : 'typescript'
+}
+
+function initialCode(challenge: CodeChallengeData, language: EditorLanguage) {
+  const saved = localStorage.getItem(storageKey(challenge.id, language))
+  if (saved != null) return saved
+
+  if (language === 'typescript') {
+    const legacy = localStorage.getItem(`pattern-lab-code-${challenge.id}`)
+    if (legacy != null) return legacy
+    return challenge.starter
+  }
+
+  return pythonChallenges[challenge.id]?.starter ?? challenge.starter
+}
+
 export function CodeChallenge({ challenge }: { challenge: CodeChallengeData }) {
-  const storageKey = `pattern-lab-code-${challenge.id}`
-  const [code, setCode] = useState(() => localStorage.getItem(storageKey) ?? challenge.starter)
+  const python = pythonChallenges[challenge.id]
+  const firstLanguage = initialLanguage(challenge.id)
+  const [language, setLanguage] = useState<EditorLanguage>(firstLanguage)
+  const [code, setCode] = useState(() => initialCode(challenge, firstLanguage))
   const [results, setResults] = useState<TestResult[] | null>(null)
   const [running, setRunning] = useState(false)
   const [hintCount, setHintCount] = useState(0)
   const [solutionVisible, setSolutionVisible] = useState(false)
 
   useEffect(() => {
-    localStorage.setItem(storageKey, code)
-  }, [code, storageKey])
+    localStorage.setItem(storageKey(challenge.id, language), code)
+  }, [challenge.id, code, language])
+
+  const config = useMemo(() => {
+    if (language === 'python' && python) {
+      return {
+        functionName: python.functionName,
+        starter: python.starter,
+        solution: python.solution,
+        examples: python.examples ?? challenge.examples,
+      }
+    }
+
+    return {
+      functionName: challenge.functionName,
+      starter: challenge.starter,
+      solution: challenge.solution,
+      examples: challenge.examples,
+    }
+  }, [challenge, language, python])
 
   const passedCount = results?.filter((r) => r.passed).length ?? 0
 
   const runTests = async () => {
     setRunning(true)
-    const next = await runInWorker(code, challenge.functionName, challenge.tests)
+    const next = language === 'python'
+      ? await runPythonTests(code, config.functionName, challenge.tests)
+      : await runTypeScriptTests(code, config.functionName, challenge.tests)
     setResults(next)
     setRunning(false)
   }
 
   const reset = () => {
-    setCode(challenge.starter)
+    setCode(config.starter)
     setResults(null)
     setHintCount(0)
+    setSolutionVisible(false)
+  }
+
+  const changeLanguage = (next: EditorLanguage) => {
+    if (next === language || (next === 'python' && !python)) return
+    localStorage.setItem(storageKey(challenge.id, language), code)
+    localStorage.setItem(LANGUAGE_KEY, next)
+    setLanguage(next)
+    setCode(initialCode(challenge, next))
+    setResults(null)
     setSolutionVisible(false)
   }
 
@@ -122,7 +180,7 @@ export function CodeChallenge({ challenge }: { challenge: CodeChallengeData }) {
       <div className="challenge-meta-grid">
         <div className="mini-panel">
           <span className="mini-label">Examples</span>
-          {challenge.examples.map((example) => <code key={example}>{example}</code>)}
+          {config.examples.map((example) => <code key={example}>{example}</code>)}
         </div>
         <div className="mini-panel">
           <span className="mini-label">Constraints</span>
@@ -132,8 +190,17 @@ export function CodeChallenge({ challenge }: { challenge: CodeChallengeData }) {
 
       <div className="editor-shell">
         <div className="editor-toolbar">
-          <div className="editor-title"><span className="status-dot" /> solution.ts</div>
+          <div className="editor-title"><span className="status-dot" /> {language === 'python' ? 'solution.py' : 'solution.ts'}</div>
           <div className="editor-actions">
+            <select
+              className="language-select"
+              aria-label="Challenge language"
+              value={language}
+              onChange={(event) => changeLanguage(event.target.value as EditorLanguage)}
+            >
+              <option value="typescript">TypeScript</option>
+              {python && <option value="python">Python</option>}
+            </select>
             <button className="icon-text-button" onClick={reset}>Reset</button>
             <button className="icon-text-button" onClick={() => setHintCount((n) => Math.min(n + 1, challenge.hints.length))}>Hint {hintCount < challenge.hints.length ? `(${hintCount + 1})` : ''}</button>
             <button className="icon-text-button" onClick={() => setSolutionVisible((v) => !v)}>{solutionVisible ? 'Hide solution' : 'Show solution'}</button>
@@ -141,14 +208,15 @@ export function CodeChallenge({ challenge }: { challenge: CodeChallengeData }) {
         </div>
 
         <CodeEditor
-          ariaLabel={`TypeScript editor for ${challenge.title}`}
+          ariaLabel={`${language === 'python' ? 'Python' : 'TypeScript'} editor for ${challenge.title}`}
           value={code}
           onChange={setCode}
+          language={language}
         />
 
         <div className="editor-footer">
-          <span>TypeScript · smart indent + bracket completion · isolated local runner · 1.5s limit</span>
-          <button className="run-button" onClick={runTests} disabled={running}>{running ? 'Running…' : '▶ Run tests'}</button>
+          <span>{language === 'python' ? 'Python · Pyodide browser runtime · first run loads Python' : 'TypeScript · isolated local runner · 1.5s limit'}</span>
+          <button className="run-button" onClick={runTests} disabled={running}>{running ? (language === 'python' ? 'Loading / running Python…' : 'Running…') : '▶ Run tests'}</button>
         </div>
       </div>
 
@@ -186,8 +254,8 @@ export function CodeChallenge({ challenge }: { challenge: CodeChallengeData }) {
 
       {solutionVisible && (
         <div className="solution-panel">
-          <div className="solution-heading"><span>Reference solution</span><div><b>{challenge.time}</b> time · <b>{challenge.space}</b> space</div></div>
-          <pre><code>{challenge.solution}</code></pre>
+          <div className="solution-heading"><span>Reference solution · {language === 'python' ? 'Python' : 'TypeScript'}</span><div><b>{challenge.time}</b> time · <b>{challenge.space}</b> space</div></div>
+          <pre><code>{config.solution}</code></pre>
           <p>{challenge.solutionExplanation}</p>
           <div className="remember-line"><strong>Pattern to remember:</strong> {challenge.remember}</div>
         </div>

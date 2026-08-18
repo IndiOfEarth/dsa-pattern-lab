@@ -1,15 +1,21 @@
 import CodeMirror from '@uiw/react-codemirror'
 import { javascript } from '@codemirror/lang-javascript'
+import { python } from '@codemirror/lang-python'
 import { oneDark } from '@codemirror/theme-one-dark'
 import './CodeEditor.css'
+
+export type EditorLanguage = 'typescript' | 'python'
 
 type Props = {
   value: string
   onChange: (value: string) => void
   ariaLabel: string
+  language: EditorLanguage
 }
 
-export function CodeEditor({ value, onChange, ariaLabel }: Props) {
+export function CodeEditor({ value, onChange, ariaLabel, language }: Props) {
+  const languageExtension = language === 'python' ? python() : javascript({ typescript: true })
+
   return (
     <div className="code-editor" aria-label={ariaLabel}>
       <CodeMirror
@@ -17,7 +23,7 @@ export function CodeEditor({ value, onChange, ariaLabel }: Props) {
         height="250px"
         minHeight="250px"
         theme={oneDark}
-        extensions={[javascript({ typescript: true })]}
+        extensions={[languageExtension]}
         basicSetup={{
           lineNumbers: true,
           highlightActiveLineGutter: true,

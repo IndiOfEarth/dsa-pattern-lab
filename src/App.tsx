@@ -4,6 +4,7 @@ import { ArraysModule } from './modules/arrays/ArraysModule'
 import { StringsModule } from './modules/strings/StringsModule'
 import { HashMapsSetsModule } from './modules/hash-maps-sets/HashMapsSetsModule'
 import { TwoPointersModule } from './modules/two-pointers/TwoPointersModule'
+import { SlidingWindowModule } from './modules/sliding-window/SlidingWindowModule'
 import { SystemDesignModule } from './modules/system-design/SystemDesignModule'
 import { getSystemDesignModule } from './modules/system-design/content'
 
@@ -30,6 +31,7 @@ export default function App() {
     if (route.moduleId === 'strings') return <StringsModule />
     if (route.moduleId === 'hash-maps-sets') return <HashMapsSetsModule />
     if (route.moduleId === 'two-pointers') return <TwoPointersModule />
+    if (route.moduleId === 'sliding-window') return <SlidingWindowModule />
 
     const systemDesignConfig = getSystemDesignModule(route.moduleId)
     if (systemDesignConfig) return <SystemDesignModule config={systemDesignConfig} />

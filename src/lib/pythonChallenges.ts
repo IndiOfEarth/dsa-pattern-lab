@@ -84,4 +84,22 @@ export const pythonChallenges: Record<string, PythonChallengeConfig> = {
     solution: `def unique_sorted(nums: list[int]) -> list[int]:\n    if not nums:\n        return []\n\n    result = [nums[0]]\n    for fast in range(1, len(nums)):\n        if nums[fast] != result[-1]:\n            result.append(nums[fast])\n\n    return result`,
     examples: ['unique_sorted([1, 1, 2, 2, 2, 5]) → [1, 2, 5]'],
   },
+  'sliding-window-guided-max-sum-k': {
+    functionName: 'max_window_sum',
+    starter: `def max_window_sum(nums: list[int], k: int) -> int:\n    # 1. Build the first window sum.\n    # 2. Slide by removing the outgoing value and adding the incoming value.\n    return 0`,
+    solution: `def max_window_sum(nums: list[int], k: int) -> int:\n    window_sum = sum(nums[:k])\n    best = window_sum\n\n    for right in range(k, len(nums)):\n        window_sum += nums[right]\n        window_sum -= nums[right - k]\n        best = max(best, window_sum)\n\n    return best`,
+    examples: ['max_window_sum([2, 1, 5, 1, 3, 2], 3) → 9', 'max_window_sum([1, 9, -1, -2, 7, 3, -1, 2], 4) → 13'],
+  },
+  'sliding-window-independent-longest-unique': {
+    functionName: 'longest_unique_substring_length',
+    starter: `def longest_unique_substring_length(s: str) -> int:\n    # What state tells you whether the current window is valid?\n    return 0`,
+    solution: `def longest_unique_substring_length(s: str) -> int:\n    seen = set()\n    left = 0\n    best = 0\n\n    for right, char in enumerate(s):\n        while char in seen:\n            seen.remove(s[left])\n            left += 1\n\n        seen.add(char)\n        best = max(best, right - left + 1)\n\n    return best`,
+    examples: ['longest_unique_substring_length("abcabcbb") → 3', 'longest_unique_substring_length("pwwkew") → 3'],
+  },
+  'sliding-window-independent-min-length': {
+    functionName: 'min_subarray_len',
+    starter: `def min_subarray_len(target: int, nums: list[int]) -> int:\n    # Expand until valid. Then ask: can the window become smaller and stay valid?\n    return 0`,
+    solution: `def min_subarray_len(target: int, nums: list[int]) -> int:\n    left = 0\n    window_sum = 0\n    best = float('inf')\n\n    for right, num in enumerate(nums):\n        window_sum += num\n\n        while window_sum >= target:\n            best = min(best, right - left + 1)\n            window_sum -= nums[left]\n            left += 1\n\n    return 0 if best == float('inf') else int(best)`,
+    examples: ['min_subarray_len(7, [2, 3, 1, 2, 4, 3]) → 2', 'min_subarray_len(11, [1, 1, 1, 1, 1, 1, 1, 1]) → 0'],
+  },
 }
